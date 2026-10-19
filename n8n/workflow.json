@@ -1,0 +1,133 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clientes-investimentos",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "744566db-057c-4ccf-ae0e-775db5afaa14",
+      "name": "Webhook",
+      "webhookId": "cc035de3-662c-48c9-8f2b-00867d2f8adc"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst entrada = $input.all();\nconst saida = [];\n\nfor (const item of entrada) {\n  const clientes = item.json.body?.clientes ?? item.json.clientes ?? [];\n\n  for (const cliente of clientes) {\n    let mensagem;\n\n    switch ((cliente.perfil || \"\").toLowerCase()) {\n      case \"conservador\":\n        mensagem = `Olá, ${cliente.nome}! Vamos explorar opções que priorizem estabilidade e preservação do capital.`;\n        break;\n\n      case \"moderado\":\n        mensagem = `Olá, ${cliente.nome}! Vamos explorar alternativas diversificadas, considerando seu perfil e seus objetivos.`;\n        break;\n\n      case \"arrojado\":\n        mensagem = `Olá, ${cliente.nome}! Vamos estudar alternativas com maior exposição à renda variável e seus respectivos riscos.`;\n        break;\n\n      default:\n        mensagem = `Olá, ${cliente.nome}! Vamos conhecer seus objetivos para avaliar alternativas adequadas ao seu perfil.`;\n    }\n\n    saida.push({\n      json: {\n        ...cliente,\n        mensagem\n      }\n    });\n  }\n}\n\nreturn saida;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "9006367d-bda1-4d78-bc8c-cb76c598bb6e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "https://digitalinnovationone.github.io/dio-lab-assistente-investimentos-rpa-n8n/data.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "175afb5d-a027-4ff9-a004-55bd2689f5b3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst texto = $input.first().json.data;\n\nconst linhas = texto\n  .replace(/\\\\n/g, \"\\n\")\n  .trim()\n  .split(/\\r?\\n/)\n  .filter(linha => linha.trim() !== \"\");\n\nconst cabecalhos = linhas[0].split(\",\").map(c => c.trim());\n\nreturn linhas.slice(1).map(linha => {\n  const valores = linha.split(\",\");\n  const registro = {};\n\n  cabecalhos.forEach((coluna, i) => {\n    registro[coluna] = (valores[i] || \"\").trim();\n  });\n\n  return { json: registro };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "52622b32-53a4-44fa-9136-be97581e449a",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst clientes = $(\"Code in JavaScript\").all().map(item => item.json);\nconst investimentos = $(\"Code in JavaScript1\").all().map(item => item.json);\n\nfunction converterSaldo(valor) {\n  if (typeof valor === \"number\") return valor;\n\n  return Number(\n    String(valor ?? \"\")\n      .replace(/R\\$/g, \"\")\n      .replace(/\\s/g, \"\")\n      .replace(/\\./g, \"\")\n      .replace(\",\", \".\")\n  ) || 0;\n}\n\nconst resultado = [];\n\nfor (const cliente of clientes) {\n  const saldo = converterSaldo(cliente.saldo);\n  const perfil = String(cliente.perfil ?? \"\")\n    .trim()\n    .toLowerCase();\n\n  const opcoes = investimentos.filter(inv => {\n    const mesmoPerfil =\n      String(inv.perfil ?? \"\").trim().toLowerCase() === perfil;\n\n    return mesmoPerfil && saldo >= converterSaldo(inv.minimo);\n  });\n\n  const listaProdutos = opcoes\n    .map(opcao =>\n      `- ${opcao.produto} | Mínimo: R$ ${opcao.minimo} | Rentabilidade: ${opcao.rentabilidade}`\n    )\n    .join(\"\\n\");\n\n  const mensagemFinal = opcoes.length > 0\n    ? `${cliente.mensagem}\\n\\nOpções para conhecer:\\n${listaProdutos}\\n\\nConsulte os riscos, custos e condições de cada produto antes de decidir.`\n    : `${cliente.mensagem}\\n\\nNão encontramos opções que atendam ao saldo informado na base atual.`;\n\n  resultado.push({\n    json: {\n      ...cliente,\n      saldoNumerico: saldo,\n      investimentosElegiveis: opcoes,\n      quantidadeOpcoes: opcoes.length,\n      mensagemFinal\n    }\n  });\n}\n\nreturn resultado;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "5e856c08-24b8-4426-a8ba-d9552699ed63",
+      "name": "Code in JavaScript2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c1425d86-003d-482f-acbc-e66b4cf6d138",
+  "meta": {
+    "instanceId": "ecc3542402cf95bba4931d3a8db4d22cdf62619a9371fa77c66ae8fc740153ab"
+  },
+  "nodeGroups": [],
+  "id": "phLBSCkFYvMkP8Nl",
+  "tags": []
+}
