@@ -23,7 +23,7 @@ Este projeto foi desenvolvido como parte de um desafio prático da DIO, com o ob
 
 ## Estrutura do projeto
 
-- `src/`: código Python e notebook de extração.
+- `rpa/`: código Python e notebook de extração.
 - `n8n/workflow.json`: fluxo de automação exportado.
 - `evidencias/`: capturas de tela da execução.
 - `README.md`: documentação do projeto.
