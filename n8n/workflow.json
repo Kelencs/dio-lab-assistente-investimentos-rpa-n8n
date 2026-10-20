@@ -1,3 +1,4 @@
+
 {
   "name": "My workflow",
   "nodes": [
@@ -69,6 +70,54 @@
       ],
       "id": "5e856c08-24b8-4426-a8ba-d9552699ed63",
       "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{\n  \"Escreva uma mensagem educacional e clara em português brasileiro para este cliente. Use somente os dados fornecidos. Não invente produtos, taxas ou rentabilidades. Explique que as informações não constituem recomendação financeira personalizada.\\n\\n\" +\n  \"Nome: \" + $json.nome + \"\\n\" +\n  \"Perfil: \" + $json.perfil + \"\\n\" +\n  \"Saldo disponível: \" + $json.saldo + \"\\n\" +\n  \"Opções elegíveis: \" + JSON.stringify($json.investimentosElegiveis) + \"\\n\\n\" +\n  \"Retorne somente a mensagem final.\"\n}}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1152,
+        16
+      ],
+      "id": "95cba695-764d-4a14-bb46-9348924dfdd8",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1168,
+        256
+      ],
+      "id": "0cf94ec2-d434-4010-b0b5-83b45d689869",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst mensagens = $input.all();\nconst clientes = $('Code in JavaScript2').all();\n\nreturn mensagens.map((item, index) => ({\n  json: {\n    ...clientes[index].json,\n    mensagemIA: item.json.text\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        16
+      ],
+      "id": "d44d6e81-3507-4e55-b24a-5c793effd633",
+      "name": "Formatar msg IA"
     }
   ],
   "pinData": {},
@@ -116,6 +165,39 @@
           }
         ]
       ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Formatar msg IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -123,8 +205,9 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "c1425d86-003d-482f-acbc-e66b4cf6d138",
+  "versionId": "9f9eb4a3-d92b-43e6-bdd0-5a6680ba93e0",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "ecc3542402cf95bba4931d3a8db4d22cdf62619a9371fa77c66ae8fc740153ab"
   },
   "nodeGroups": [],
